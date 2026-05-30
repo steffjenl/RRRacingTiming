@@ -165,6 +165,182 @@
         background: #fffefb;
       }
 
+      .driver-row {
+        cursor: pointer;
+      }
+
+      .driver-row:hover {
+        background: #fff3e8;
+      }
+
+      .driver-row.selected {
+        background: #ffe8d8;
+      }
+
+      .coach-panel {
+        margin-top: 1rem;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        padding: 0.95rem;
+        animation: rise 880ms ease-out;
+      }
+
+      .coach-panel h2 {
+        margin: 0 0 0.55rem;
+        font-size: 1.2rem;
+      }
+
+      .coach-driver {
+        margin: 0 0 0.65rem;
+        color: var(--muted);
+      }
+
+      .coach-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 0.45rem;
+        margin-bottom: 0.65rem;
+      }
+
+      .coach-metrics div {
+        background: #fff8ee;
+        border: 1px solid #f0dfc2;
+        border-radius: 0.65rem;
+        padding: 0.45rem 0.55rem;
+        font-size: 0.9rem;
+      }
+
+      .coach-metrics .score {
+        background: #ffe9d7;
+        border-color: #f2c8a9;
+      }
+
+      .coach-metrics .score span {
+        display: block;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: #7b4f2f;
+      }
+
+      .sector-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 0.55rem;
+        margin-bottom: 0.7rem;
+      }
+
+      .sector-chip {
+        border: 1px solid #e8ddcc;
+        border-radius: 0.7rem;
+        padding: 0.5rem 0.6rem;
+        background: #fff9f2;
+        display: grid;
+        gap: 0.2rem;
+        font-size: 0.83rem;
+      }
+
+      .sector-chip strong {
+        font-size: 0.85rem;
+      }
+
+      .sector-chip.good {
+        background: #ebf8f1;
+        border-color: #b9e2cd;
+      }
+
+      .sector-chip.warn {
+        background: #fff7e8;
+        border-color: #efd7a1;
+      }
+
+      .sector-chip.risk {
+        background: #ffecea;
+        border-color: #e9b8b2;
+      }
+
+      .sector-chip.neutral {
+        background: #f8f6f1;
+        border-color: #dfd8cb;
+      }
+
+      .coach-columns {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 0.8rem;
+      }
+
+      .coach-block {
+        background: #fffaf3;
+        border: 1px solid #f2e5d0;
+        border-radius: 0.75rem;
+        padding: 0.65rem 0.8rem;
+      }
+
+      .coach-block h3 {
+        margin: 0 0 0.45rem;
+        font-size: 0.96rem;
+      }
+
+      .coach-block ul {
+        margin: 0;
+        padding-left: 1rem;
+        color: #4f4a43;
+      }
+
+      .coach-block ol {
+        margin: 0;
+        padding-left: 1.1rem;
+        color: #4f4a43;
+      }
+
+      .coach-block li {
+        margin-bottom: 0.35rem;
+      }
+
+      .coach-db {
+        margin-top: 0.7rem;
+        padding: 0.55rem 0.7rem;
+        border: 1px dashed #d9ccb4;
+        border-radius: 0.7rem;
+        background: #fffaf4;
+      }
+
+      .coach-db h3 {
+        margin: 0 0 0.3rem;
+        font-size: 0.9rem;
+      }
+
+      .coach-db p {
+        margin: 0;
+        color: #5b554f;
+        font-size: 0.86rem;
+      }
+
+      .spark-wrap {
+        margin-top: 0.45rem;
+      }
+
+      .sparkline {
+        width: 100%;
+        max-width: 360px;
+        height: 96px;
+        color: #bf5a28;
+        background: #fffdf8;
+        border: 1px solid #ead9c0;
+        border-radius: 0.55rem;
+        padding: 0.2rem;
+      }
+
+      .spark-meta {
+        margin-top: 0.35rem;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 0.3rem;
+        font-size: 0.78rem;
+        color: #5c5045;
+      }
+
       .empty {
         padding: 1.25rem;
         color: var(--muted);

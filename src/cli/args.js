@@ -9,6 +9,9 @@ function readValue(args, i, flag) {
 export function parseArgs(argv) {
   const args = argv.slice(2);
   const options = {
+    analyze: null,
+    report: null,
+    coachDriver: null,
     url: null,
     host: null,
     port: null,
@@ -30,6 +33,18 @@ export function parseArgs(argv) {
   for (let i = 0; i < args.length; i += 1) {
     const arg = args[i];
     switch (arg) {
+      case "--analyze":
+        options.analyze = readValue(args, i, arg);
+        i += 1;
+        break;
+      case "--report":
+        options.report = readValue(args, i, arg);
+        i += 1;
+        break;
+      case "--coach-driver":
+        options.coachDriver = readValue(args, i, arg);
+        i += 1;
+        break;
       case "--url":
         options.url = readValue(args, i, arg);
         i += 1;
@@ -103,6 +118,11 @@ export function parseArgs(argv) {
 export function printHelp() {
   const lines = [
     "Usage: node src/index.js [options]",
+    "",
+    "Offline coaching analysis:",
+    "  --analyze <path>             analyze normalized JSONL for kart coaching",
+    "  --report <path>              write analysis report JSON to file",
+    "  --coach-driver <value>       filter analyzed drivers by id/name/number",
     "",
     "Required behavior options:",
     "  --url <value>                 override endpoint (ws/wss/http/https)",

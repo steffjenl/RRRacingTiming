@@ -6,6 +6,20 @@
 npm start -- --pretty
 ```
 
+## Kart Coaching analyse (offline)
+
+Analyseer een genormaliseerd JSONL logbestand met coaching-inzichten:
+
+```bash
+node src/index.js --analyze logs/normalized-test.jsonl
+```
+
+Analyseer alleen een specifieke driver en sla JSON rapport op:
+
+```bash
+node src/index.js --analyze logs/normalized-test.jsonl --coach-driver "12" --report logs/kart-coach-report.json
+```
+
 ## Filter voorbeelden
 
 ```bash

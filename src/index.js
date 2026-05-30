@@ -6,11 +6,17 @@ import { printRawEvent } from "./output/raw-printer.js";
 import { printPrettyState } from "./output/pretty-printer.js";
 import { printJsonEvent } from "./output/json-printer.js";
 import { LiveRuntime } from "./app/live-runtime.js";
+import { runKartCoachAnalysis } from "./analysis/kart-coach-analyzer.js";
 
 async function main() {
   const cliOptions = parseArgs(process.argv);
   if (cliOptions.help) {
     printHelp();
+    return;
+  }
+
+  if (cliOptions.analyze) {
+    runKartCoachAnalysis(cliOptions);
     return;
   }
 

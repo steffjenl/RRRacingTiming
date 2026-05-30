@@ -11,10 +11,12 @@
     "start:cli": "node src/index.js",
     "dev": "node src/index.js --debug",
     "start:web": "node src/web/server.js",
-    "lint": "node --check src/index.js && node --check src/app/live-runtime.js && node --check src/web/server.js && node --check src/web/public/app.js"
+    "analyze": "node src/index.js --analyze",
+    "lint": "node --check src/index.js && node --check src/app/live-runtime.js && node --check src/analysis/kart-coach-analyzer.js && node --check src/storage/analytics-db.js && node --check src/web/server.js && node --check src/web/public/app.js"
   },
   "dependencies": {
     "express": "^4.21.2",
+    "lowdb": "^7.0.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "ws": "^8.18.3"

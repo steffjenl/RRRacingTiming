@@ -95,6 +95,34 @@ node src/index.js --url ws://www.apex-timing.com:9462/ --once --debug
 - Filters worden server-side toegepast met dezelfde filterfunctie als CLI (`filterDrivers`).
 - Health endpoint: `/health`.
 
+## Kart Coaching CLI (offline analyse)
+
+Je kunt een ontvangen normalized JSONL bestand analyseren om coaching-inzichten te krijgen:
+
+```bash
+node src/index.js --analyze logs/normalized-session.jsonl
+```
+
+Of met npm script:
+
+```bash
+npm run analyze -- logs/normalized-session.jsonl
+```
+
+Met filter op driver en opslag als rapport:
+
+```bash
+node src/index.js --analyze logs/normalized-session.jsonl --coach-driver "12" --report logs/kart-coach-report.json
+```
+
+Tip voor morgen: log live data eerst met normalized output, bijvoorbeeld:
+
+```bash
+node src/index.js --json --save-normalized logs/normalized-$(date +%Y%m%d)-session.jsonl
+```
+
+Daarna kun je dat bestand direct als input voor `--analyze` gebruiken.
+
 Belangrijke env vars voor web mode:
 - `WEB_PORT` (default `3000`)
 - `LOG_LEVEL` (`info` of `debug`)

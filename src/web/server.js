@@ -7,6 +7,7 @@ import { buildRuntimeConfig } from "../config.js";
 import { createLogger } from "../utils/logger.js";
 import { LiveRuntime } from "../app/live-runtime.js";
 import { filterDrivers } from "../filters/driver-filter.js";
+import { AnalyticsDb } from "../storage/analytics-db.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,6 +27,12 @@ const runtime = new LiveRuntime(runtimeConfig, logger, {
   persistNormalizedPath: process.env.WEB_SAVE_NORMALIZED || null,
   snapshotPath: process.env.WEB_SNAPSHOT_PATH || "logs/state-snapshots.jsonl"
 });
+
+const analyticsDb = new AnalyticsDb(process.env.ANALYTICS_DB_PATH || "logs/analytics-db.json", logger, {
+  maxHistory: 300,
+  minWriteIntervalMs: 10000
+});
+await analyticsDb.init();
 
 const socketFilters = new WeakMap();
 
@@ -121,6 +128,10 @@ wsServer.on("connection", (ws) => {
 });
 
 runtime.on("state", ({ state, summary, sequence, mode }) => {
+  analyticsDb.recordState(state).catch((error) => {
+    logger.warn("Analytics DB write failed", error?.message || error);
+  });
+
   broadcastState("update", state, summary, {
     sequence,
     mode
@@ -159,6 +170,22 @@ app.get("/health", (_req, res) => {
     ok: true,
     connection_state: runtime.getState()?.session?.connection_state || "unknown",
     summary: runtime.getLatestSummary()
+  });
+});
+
+app.get("/api/analytics/:driverId", async (req, res) => {
+  const result = await analyticsDb.getDriverAnalytics(req.params.driverId);
+  if (!result) {
+    res.status(404).json({
+      ok: false,
+      message: "No analytics available for this driver yet"
+    });
+    return;
+  }
+
+  res.json({
+    ok: true,
+    analytics: result
   });
 });
 
