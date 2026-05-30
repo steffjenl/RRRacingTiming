@@ -163,11 +163,11 @@ app.get("/health", (_req, res) => {
 });
 
 app.get("/vendor/react.production.min.js", (_req, res) => {
-  res.sendFile(path.resolve(__dirname, "../../../node_modules/react/umd/react.production.min.js"));
+  res.sendFile(path.resolve(__dirname, "../../node_modules/react/umd/react.production.min.js"));
 });
 
 app.get("/vendor/react-dom.production.min.js", (_req, res) => {
-  res.sendFile(path.resolve(__dirname, "../../../node_modules/react-dom/umd/react-dom.production.min.js"));
+  res.sendFile(path.resolve(__dirname, "../../node_modules/react-dom/umd/react-dom.production.min.js"));
 });
 
 app.use(express.static(path.join(__dirname, "public")));

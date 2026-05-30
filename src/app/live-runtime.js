@@ -72,7 +72,13 @@ export class LiveRuntime extends EventEmitter {
     this.rawWriter.open();
     this.normalizedWriter.open();
     this.snapshotWriter.start();
-    await this.manager.start();
+
+    // Transport startup can remain active indefinitely while connected.
+    // Run it in the background so app/server startup is not blocked.
+    this.manager.start().catch((error) => {
+      this.logger.error("Runtime start failure", error?.message || error);
+      this.emit("error", { error });
+    });
   }
 
   stop() {
