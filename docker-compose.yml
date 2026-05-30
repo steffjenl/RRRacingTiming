@@ -8,6 +8,8 @@ services:
       APEX_PORT: ${APEX_PORT:-9460}
       APEX_GMT: ${APEX_GMT:-2}
       APEX_SECURE: ${APEX_SECURE:-false}
+      APEX_WS_URL: ${APEX_WS_URL:-}
+      APEX_POLLING_URL: ${APEX_POLLING_URL:-}
       WEB_PORT: 3000
       LOG_LEVEL: ${LOG_LEVEL:-info}
       WEB_SAVE_RAW: ${WEB_SAVE_RAW:-}

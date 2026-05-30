@@ -130,6 +130,12 @@ Belangrijke env vars voor web mode:
 - `WEB_SAVE_NORMALIZED` (optioneel)
 - `WEB_SNAPSHOT_PATH` (optioneel)
 
+Reverse proxy tip (404 polling warning):
+- Als je `{"type":"warning","warning":{"status":404}}` ziet, komt dat meestal van polling fallback naar een verkeerde URL.
+- Zet in dat geval expliciet:
+	- `APEX_WS_URL=wss://www.apex-timing.com:9463/`
+	- `APEX_POLLING_URL=https://www.apex-timing.com/commonv2/functions/live_ajax.php`
+
 ## Docker
 
 Build image:

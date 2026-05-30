@@ -32,6 +32,7 @@ export function buildRuntimeConfig(cliOptions) {
     port: Number(process.env.APEX_PORT || 9460),
     gmt: Number(process.env.APEX_GMT || 2),
     secure: toBool(process.env.APEX_SECURE, false),
+    wsUrlOverride: process.env.APEX_WS_URL || null,
     pollingUrlOverride: process.env.APEX_POLLING_URL || null
   };
 
@@ -40,7 +41,7 @@ export function buildRuntimeConfig(cliOptions) {
   const gmt = Number.isFinite(cliOptions.gmt) ? cliOptions.gmt : defaults.gmt;
   const secure = cliOptions.secure || defaults.secure;
 
-  let wsUrl = secure ? `wss://${host}:${port + 3}/` : `ws://${host}:${port + 2}/`;
+  let wsUrl = defaults.wsUrlOverride || (secure ? `wss://${host}:${port + 3}/` : `ws://${host}:${port + 2}/`);
   let pollingUrl = defaults.pollingUrlOverride || `https://${host}/commonv2/functions/live_ajax.php`;
 
   if (cliOptions.url) {
