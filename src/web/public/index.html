@@ -353,6 +353,8 @@
         line-height: 1.45;
         display: grid;
         gap: 0.12rem;
+        text-align: center;
+        justify-items: center;
       }
 
       .desktop-only {
@@ -365,7 +367,6 @@
 
       .mobile-cards {
         padding: 0.7rem;
-        display: grid;
         gap: 0.65rem;
       }
 
@@ -466,6 +467,9 @@
     </style>
   </head>
   <body>
+    <script>
+      window.__APP_VERSION__ = "__APP_VERSION_PLACEHOLDER__";
+    </script>
     <div id="root"></div>
     <script src="/vendor/react.production.min.js"></script>
     <script src="/vendor/react-dom.production.min.js"></script>

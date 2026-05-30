@@ -354,6 +354,7 @@ function App() {
   const sparkline = useMemo(() => {
     return buildSparkline(driverAnalytics?.history || []);
   }, [driverAnalytics]);
+  const appVersion = window.__APP_VERSION__ || "0.0.0-dev";
 
   const e = React.createElement;
 
@@ -581,7 +582,7 @@ function App() {
           }, "MonkeySoft")
         ]),
         e("div", { key: "made" }, "Made with ♥ in The Netherlands"),
-        e("div", { key: "version" }, "0.0.0-dev")
+        e("div", { key: "version" }, appVersion)
       ]
     )
   ]);

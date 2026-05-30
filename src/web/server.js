@@ -1,4 +1,5 @@
 import express from "express";
+import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -23,6 +24,8 @@ const webPort = Number(process.env.WEB_PORT || 3000);
 const debugEnabled = String(process.env.LOG_LEVEL || "").toLowerCase() === "debug";
 const logger = createLogger(debugEnabled);
 const runtimeConfig = buildRuntimeConfig({});
+const packageJsonPath = path.resolve(__dirname, "../../package.json");
+const appVersion = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")).version || "0.0.0-dev";
 const maxWsClients = Number(process.env.WEB_MAX_WS_CLIENTS || 80);
 const allowedCorsOrigin = process.env.CORS_ORIGIN || "*";
 
@@ -100,6 +103,14 @@ function broadcastState(type, state, summary, meta = {}) {
     });
   }
 }
+
+function serveIndexHtml(req, res) {
+  const indexPath = path.join(__dirname, "public", "index.html");
+  const html = fs.readFileSync(indexPath, "utf8").replaceAll("__APP_VERSION_PLACEHOLDER__", appVersion);
+  res.type("html").send(html);
+}
+
+app.get(["/", "/index.html"], serveIndexHtml);
 
 wsServer.on("connection", (ws) => {
   if (wsServer.clients.size > maxWsClients) {
