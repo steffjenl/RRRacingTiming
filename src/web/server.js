@@ -28,6 +28,7 @@ const packageJsonPath = path.resolve(__dirname, "../../package.json");
 const appVersion = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")).version || "0.0.0-dev";
 const maxWsClients = Number(process.env.WEB_MAX_WS_CLIENTS || 80);
 const allowedCorsOrigin = process.env.CORS_ORIGIN || "*";
+const trustProxy = Number(process.env.WEB_TRUST_PROXY || 1);
 
 const runtime = new LiveRuntime(runtimeConfig, logger, {
   once: false,
@@ -45,6 +46,7 @@ await analyticsDb.init();
 const socketFilters = new WeakMap();
 
 app.disable("x-powered-by");
+app.set("trust proxy", trustProxy);
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false
