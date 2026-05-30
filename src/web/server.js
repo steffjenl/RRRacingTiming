@@ -2,6 +2,9 @@ import express from "express";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import cors from "cors";
 import { WebSocket, WebSocketServer } from "ws";
 import { buildRuntimeConfig } from "../config.js";
 import { createLogger } from "../utils/logger.js";
@@ -20,6 +23,8 @@ const webPort = Number(process.env.WEB_PORT || 3000);
 const debugEnabled = String(process.env.LOG_LEVEL || "").toLowerCase() === "debug";
 const logger = createLogger(debugEnabled);
 const runtimeConfig = buildRuntimeConfig({});
+const maxWsClients = Number(process.env.WEB_MAX_WS_CLIENTS || 80);
+const allowedCorsOrigin = process.env.CORS_ORIGIN || "*";
 
 const runtime = new LiveRuntime(runtimeConfig, logger, {
   once: false,
@@ -36,11 +41,33 @@ await analyticsDb.init();
 
 const socketFilters = new WeakMap();
 
+app.disable("x-powered-by");
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false
+}));
+app.use(express.json({ limit: "16kb" }));
+app.use(cors({
+  origin: allowedCorsOrigin === "*" ? true : allowedCorsOrigin,
+  methods: ["GET"]
+}));
+
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 120,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { ok: false, message: "Too many requests" }
+});
+
+app.use("/api", apiLimiter);
+
 function normalizeClientFilters(input) {
+  const MAX_FILTER_LENGTH = 64;
   return {
-    driver: String(input?.driver || "").trim() || null,
-    driverNumber: String(input?.driverNumber || "").trim() || null,
-    team: String(input?.team || "").trim() || null
+    driver: String(input?.driver || "").trim().slice(0, MAX_FILTER_LENGTH) || null,
+    driverNumber: String(input?.driverNumber || "").trim().slice(0, MAX_FILTER_LENGTH) || null,
+    team: String(input?.team || "").trim().slice(0, MAX_FILTER_LENGTH) || null
   };
 }
 
@@ -75,6 +102,11 @@ function broadcastState(type, state, summary, meta = {}) {
 }
 
 wsServer.on("connection", (ws) => {
+  if (wsServer.clients.size > maxWsClients) {
+    ws.close(1008, "Server busy");
+    return;
+  }
+
   const defaultFilters = normalizeClientFilters({});
   socketFilters.set(ws, defaultFilters);
 
@@ -102,8 +134,24 @@ wsServer.on("connection", (ws) => {
 
   ws.on("message", (data) => {
     try {
+      if (typeof data === "string" && data.length > 8 * 1024) {
+        sendJson(ws, {
+          type: "error",
+          message: "Message too large"
+        });
+        return;
+      }
+
       const message = JSON.parse(String(data));
-      if (message?.type === "set_filters") {
+      if (!message || typeof message !== "object" || typeof message.type !== "string") {
+        sendJson(ws, {
+          type: "error",
+          message: "Invalid message shape"
+        });
+        return;
+      }
+
+      if (message.type === "set_filters") {
         const filters = normalizeClientFilters(message.filters);
         socketFilters.set(ws, filters);
         const latestState = runtime.getState();
@@ -117,7 +165,13 @@ wsServer.on("connection", (ws) => {
             }
           });
         }
+        return;
       }
+
+      sendJson(ws, {
+        type: "error",
+        message: "Unsupported message type"
+      });
     } catch (error) {
       sendJson(ws, {
         type: "error",

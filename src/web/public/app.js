@@ -399,7 +399,8 @@ function App() {
       ]),
       drivers.length === 0
         ? e("div", { className: "empty", key: "empty" }, "Nog geen drivers zichtbaar voor deze filters.")
-        : e("div", { className: "table-wrap", key: "tableWrap" }, [
+        : [
+            e("div", { className: "table-wrap desktop-only", key: "tableWrap" }, [
             e("table", { key: "table" }, [
               e("thead", { key: "thead" },
                 e("tr", { key: "headRow" }, [
@@ -436,7 +437,36 @@ function App() {
                 )
               )
             ])
-          ])
+          ]),
+          e(
+            "div",
+            { className: "mobile-cards mobile-only", key: "mobileCards" },
+            drivers.map((driver) =>
+              e(
+                "button",
+                {
+                  type: "button",
+                  key: `card-${driver.id || `${driver.number}-${driver.name}`}`,
+                  className: String(driver.id || "") === String(selectedDriverId || "") ? "driver-card selected" : "driver-card",
+                  onClick: () => setSelectedDriverId(String(driver.id || ""))
+                },
+                [
+                  e("div", { className: "driver-card-top", key: "top" }, [
+                    e("strong", { key: "name" }, `${formatValue(driver.name)} (#${formatValue(driver.number)})`),
+                    e("span", { key: "pos" }, `P${formatValue(driver.position)}`)
+                  ]),
+                  e("div", { className: "driver-card-team", key: "team" }, formatValue(driver.team)),
+                  e("div", { className: "driver-card-metrics", key: "metrics" }, [
+                    e("span", { key: "best" }, `Best ${formatValue(driver.best_lap)}`),
+                    e("span", { key: "last" }, `Last ${formatValue(driver.last_lap)}`),
+                    e("span", { key: "gap" }, `Gap ${formatValue(driver.gap)}`),
+                    e("span", { key: "laps" }, `Laps ${formatValue(driver.lap_count)}`)
+                  ])
+                ]
+              )
+            )
+          )
+        ]
     ]),
     e("section", { className: "coach-panel", key: "coach" }, [
       e("h2", { key: "coachTitle" }, "Kart Coaching"),
@@ -497,7 +527,7 @@ function App() {
         ])
       ]),
       e("div", { className: "coach-db", key: "coachDb" }, [
-        e("h3", { key: "dbTitle" }, "Historische analytics (lightweight DB)"),
+        e("h3", { key: "dbTitle" }, "Historische analytics"),
         driverAnalytics
           ? e("p", { key: "dbSummary" }, `Samples: ${driverAnalytics.samples} | Trend avg lap: ${formatMs(driverAnalytics.trend_avg_lap_ms)}`)
           : e("p", { key: "dbSummary" }, "Nog geen historische samples opgeslagen voor deze driver."),
@@ -538,9 +568,21 @@ function App() {
       ])
     ]),
     e(
-      "p",
+      "div",
       { className: "footer-note", key: "foot" },
-      "Copyright (c) MonkeySoft | Made with (Heart) by MonkeySoft"
+      [
+        e("div", { key: "copyright" }, [
+          "Copyright 2026 ",
+          e("a", {
+            key: "monkeysoft",
+            href: "https://monkeysoft.nl/",
+            target: "_blank",
+            rel: "noreferrer noopener"
+          }, "MonkeySoft")
+        ]),
+        e("div", { key: "made" }, "Made with ♥ in The Netherlands"),
+        e("div", { key: "version" }, "0.0.0-dev")
+      ]
     )
   ]);
 }

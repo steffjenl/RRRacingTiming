@@ -350,6 +350,68 @@
         margin-top: 0.85rem;
         color: var(--muted);
         font-size: 0.86rem;
+        line-height: 1.45;
+        display: grid;
+        gap: 0.12rem;
+      }
+
+      .desktop-only {
+        display: block;
+      }
+
+      .mobile-only {
+        display: none;
+      }
+
+      .mobile-cards {
+        padding: 0.7rem;
+        display: grid;
+        gap: 0.65rem;
+      }
+
+      .driver-card {
+        width: 100%;
+        border: 1px solid #eadbc2;
+        border-radius: 0.85rem;
+        background: #fff9ef;
+        text-align: left;
+        padding: 0.7rem;
+        color: #2a2520;
+      }
+
+      .driver-card.selected {
+        border-color: #df9c6f;
+        background: #ffe9d7;
+      }
+
+      .driver-card-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.6rem;
+        margin-bottom: 0.35rem;
+      }
+
+      .driver-card-team {
+        color: #6b635a;
+        margin-bottom: 0.45rem;
+        font-size: 0.9rem;
+      }
+
+      .driver-card-metrics {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.3rem;
+        font-size: 0.82rem;
+        color: #51473f;
+      }
+
+      .footer-note a {
+        color: #0f6a55;
+        text-decoration: none;
+      }
+
+      .footer-note a:hover {
+        text-decoration: underline;
       }
 
       @keyframes rise {
@@ -360,6 +422,45 @@
         to {
           opacity: 1;
           transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 780px) {
+        .page {
+          padding: 0.8rem;
+        }
+
+        .filters {
+          grid-template-columns: 1fr;
+        }
+
+        .filters input {
+          min-height: 44px;
+          font-size: 1rem;
+        }
+
+        .desktop-only {
+          display: none;
+        }
+
+        .mobile-only {
+          display: grid;
+        }
+
+        .coach-columns {
+          grid-template-columns: 1fr;
+        }
+
+        .coach-metrics {
+          grid-template-columns: 1fr 1fr;
+        }
+
+        .status-chip {
+          font-size: 0.82rem;
+        }
+
+        .sparkline {
+          max-width: 100%;
         }
       }
     </style>
