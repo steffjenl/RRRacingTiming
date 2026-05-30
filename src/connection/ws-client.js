@@ -1,4 +1,5 @@
 import EventEmitter from "node:events";
+import WebSocket from "ws";
 
 export class WsClient extends EventEmitter {
   constructor(url, logger) {
@@ -17,27 +18,27 @@ export class WsClient extends EventEmitter {
     this.logger.debug("Opening WebSocket", this.url);
     this.socket = new WebSocket(this.url);
 
-    this.socket.onopen = () => {
+    this.socket.on("open", () => {
       this.openedAt = Date.now();
       this.emit("open");
-    };
+    });
 
-    this.socket.onmessage = (event) => {
-      this.emit("message", String(event.data ?? ""));
-    };
+    this.socket.on("message", (data) => {
+      this.emit("message", String(data ?? ""));
+    });
 
-    this.socket.onerror = (error) => {
+    this.socket.on("error", (error) => {
       this.emit("error", error);
-    };
+    });
 
-    this.socket.onclose = (event) => {
+    this.socket.on("close", (code, reasonBuffer) => {
       const openDurationMs = this.openedAt > 0 ? Date.now() - this.openedAt : 0;
       this.emit("close", {
-        code: event.code,
-        reason: event.reason,
+        code,
+        reason: String(reasonBuffer ?? ""),
         openDurationMs
       });
-    };
+    });
   }
 
   close() {
