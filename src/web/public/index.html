@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RRRacingTiming Live Dashboard</title>
+    <style>
+      :root {
+        --bg-0: #f9f6ef;
+        --bg-1: #f3ede0;
+        --panel: #fffdf8;
+        --ink: #1c1f26;
+        --muted: #6a727c;
+        --accent: #db5a1f;
+        --accent-soft: #ffd7c4;
+        --line: #e8decb;
+        --ok: #147a4b;
+        --warn: #955d00;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Avenir Next", "Nunito", "Segoe UI", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 10%, #ffe7d6 0%, transparent 35%),
+          radial-gradient(circle at 90% 80%, #d7f3ea 0%, transparent 35%),
+          linear-gradient(165deg, var(--bg-0), var(--bg-1));
+      }
+
+      .page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 1.25rem;
+      }
+
+      .hero {
+        display: grid;
+        gap: 0.75rem;
+        margin-bottom: 1.2rem;
+        animation: rise 480ms ease-out;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(1.6rem, 3vw, 2.5rem);
+        letter-spacing: 0.03em;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        width: fit-content;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0.35rem 0.75rem;
+        font-size: 0.9rem;
+      }
+
+      .status-dot {
+        width: 0.6rem;
+        height: 0.6rem;
+        border-radius: 999px;
+        background: var(--warn);
+      }
+
+      .status-dot.connected {
+        background: var(--ok);
+      }
+
+      .filters {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 0.75rem;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        padding: 0.9rem;
+        margin-bottom: 1rem;
+        animation: rise 640ms ease-out;
+      }
+
+      .filters label {
+        display: grid;
+        gap: 0.35rem;
+        font-size: 0.84rem;
+        color: var(--muted);
+      }
+
+      .filters input {
+        width: 100%;
+        border: 1px solid #d6ccba;
+        border-radius: 0.65rem;
+        padding: 0.55rem 0.6rem;
+        font-size: 0.95rem;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .filters input:focus {
+        outline: 2px solid var(--accent-soft);
+        border-color: var(--accent);
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 1rem;
+        overflow: hidden;
+        animation: rise 760ms ease-out;
+      }
+
+      .panel-header {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        font-size: 0.92rem;
+      }
+
+      .panel-header b {
+        color: var(--accent);
+      }
+
+      .table-wrap {
+        width: 100%;
+        overflow: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 0.55rem 0.65rem;
+        border-bottom: 1px solid #f1ebdf;
+        white-space: nowrap;
+      }
+
+      th {
+        font-size: 0.8rem;
+        color: #6f6050;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: #fff8ee;
+      }
+
+      tbody tr:nth-child(odd) {
+        background: #fffefb;
+      }
+
+      .empty {
+        padding: 1.25rem;
+        color: var(--muted);
+      }
+
+      .footer-note {
+        margin-top: 0.85rem;
+        color: var(--muted);
+        font-size: 0.86rem;
+      }
+
+      @keyframes rise {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script src="/vendor/react.production.min.js"></script>
+    <script src="/vendor/react-dom.production.min.js"></script>
+    <script src="/app.js"></script>
+  </body>
+</html>
