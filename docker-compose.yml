@@ -1,0 +1,16 @@
+services:
+  rrracingtiming-web:
+    build: .
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    environment:
+      APEX_HOST: ${APEX_HOST:-www.apex-timing.com}
+      APEX_PORT: ${APEX_PORT:-9460}
+      APEX_GMT: ${APEX_GMT:-2}
+      APEX_SECURE: ${APEX_SECURE:-false}
+      WEB_PORT: 3000
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      WEB_SAVE_RAW: ${WEB_SAVE_RAW:-}
+      WEB_SAVE_NORMALIZED: ${WEB_SAVE_NORMALIZED:-}
+      WEB_SNAPSHOT_PATH: ${WEB_SNAPSHOT_PATH:-logs/state-snapshots.jsonl}
+    restart: unless-stopped
