@@ -360,7 +360,7 @@ function App() {
 
   return e("div", { className: "page" }, [
     e("header", { className: "hero", key: "hero" }, [
-      e("h1", { key: "title" }, "RRRacingTiming Live Dashboard"),
+      e("h1", { key: "title" }, "RR-Racing Live Dashboard"),
       e("p", { className: "subtitle", key: "subtitle" }, "Live timing met pitbox-power voor de broertjes van RR-Racing uit Den Oever."),
       e("div", { className: "status-chip", key: "status" }, [
         e("span", { className: statusClass, key: "dot" }),
