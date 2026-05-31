@@ -57,24 +57,36 @@ function parseGridHtml(gridHtml) {
       cellIndex += 1;
     }
 
-    drivers.push({
-      id: driverId,
-      position: Number.parseInt((/data-pos="([^"]+)"/.exec(attrs) || [])[1] || "0", 10) || null,
-      rank: rawFields.rk || rawFields.rku || null,
-      number: rawFields.no || null,
-      name: rawFields.dr || null,
-      team: rawFields.grp || null,
-      status: rawFields.sta || null,
-      best_lap: rawFields.blp || null,
-      last_lap: rawFields.llp || null,
-      gap: rawFields.gap || null,
-      pit_status: rawFields.pit || null,
-      lap_count: rawFields.int || null,
-      raw_fields: rawFields
-    });
+    drivers.push(buildDriverRecord(
+      driverId,
+      Number.parseInt((/data-pos="([^"]+)"/.exec(attrs) || [])[1] || "0", 10) || null,
+      rawFields
+    ));
   }
 
-  return drivers.sort((a, b) => (a.position ?? 9999) - (b.position ?? 9999));
+  return {
+    drivers: drivers.sort((a, b) => (a.position ?? 9999) - (b.position ?? 9999)),
+    columnTypeByIndex
+  };
+}
+
+function buildDriverRecord(driverId, position, rawFields) {
+  const safeFields = rawFields || {};
+  return {
+    id: driverId,
+    position,
+    rank: safeFields.rk || safeFields.rku || null,
+    number: safeFields.no || null,
+    name: safeFields.dr || null,
+    team: safeFields.grp || null,
+    status: safeFields.sta || null,
+    best_lap: safeFields.blp || safeFields.tb || null,
+    last_lap: safeFields.llp || safeFields.tn || null,
+    gap: safeFields.gap || safeFields.ib || null,
+    pit_status: safeFields.pit || null,
+    lap_count: safeFields.int || null,
+    raw_fields: safeFields
+  };
 }
 
 function pickTeamFromInfo(driverInfo) {
@@ -167,6 +179,30 @@ function getRowIdFromCellId(cellId) {
   return String(cellId || "").replace(/c\d+$/, "") || null;
 }
 
+function getCellPositionFromCellId(cellId) {
+  const match = /c(\d+)$/.exec(String(cellId || ""));
+  if (!match) {
+    return null;
+  }
+  const index = Number.parseInt(match[1], 10);
+  return Number.isFinite(index) && index > 0 ? index : null;
+}
+
+function patchDriverFromElementUpdate(driver, event, columnType) {
+  const rawFields = { ...(driver?.raw_fields || {}) };
+  const value = stripHtml(event.parsed?.field2 || "");
+  const className = String(event.parsed?.field1 || "").trim();
+
+  if (className) {
+    rawFields[className] = value;
+  }
+  if (columnType) {
+    rawFields[columnType] = value;
+  }
+
+  return buildDriverRecord(driver.id, driver.position, rawFields);
+}
+
 export class ModelProjector {
   constructor(baseConfig) {
     this.learningEnabled = Boolean(baseConfig.learningEnabled);
@@ -189,7 +225,8 @@ export class ModelProjector {
       },
       grid: {
         html: "",
-        drivers: []
+        drivers: [],
+        column_type_by_index: []
       },
       raw_elements: {},
       driver_info_by_driver_id: {},
@@ -263,8 +300,9 @@ export class ModelProjector {
 
     if (category === "grid") {
       this.state.grid.html = event.parsed?.field2 || "";
-      const parsedDrivers = parseGridHtml(this.state.grid.html);
-      this.state.grid.drivers = enrichTeams(parsedDrivers, this.state.driver_info_by_driver_id);
+      const parsedGrid = parseGridHtml(this.state.grid.html);
+      this.state.grid.column_type_by_index = parsedGrid.columnTypeByIndex || [];
+      this.state.grid.drivers = enrichTeams(parsedGrid.drivers, this.state.driver_info_by_driver_id);
     }
 
     if (category === "element_update" || category === "driver_stream_update" || category === "position_update") {
@@ -275,9 +313,26 @@ export class ModelProjector {
           value: event.parsed?.field2 || "",
           updated_at: event.received_at
         };
+
+        const rowId = getRowIdFromCellId(id);
+        const cellPosition = getCellPositionFromCellId(id);
+        if (rowId && Number.isFinite(cellPosition)) {
+          const mappedType = this.state.grid.column_type_by_index[(cellPosition || 1) - 1] || null;
+          const driverIndex = this.state.grid.drivers.findIndex((driver) => String(driver.id || "") === String(rowId));
+          if (driverIndex >= 0) {
+            const currentDriver = this.state.grid.drivers[driverIndex];
+            const patchedDriver = patchDriverFromElementUpdate(currentDriver, event, mappedType);
+            this.state.grid.drivers[driverIndex] = patchedDriver;
+          }
+        }
       }
 
-      if (category === "element_update" && event.parsed?.field1 === "in") {
+      const checkpointCellPosition = getCellPositionFromCellId(event.parsed?.field0 || "");
+      const checkpointColumnType = Number.isFinite(checkpointCellPosition)
+        ? this.state.grid.column_type_by_index[(checkpointCellPosition || 1) - 1] || null
+        : null;
+
+      if (category === "element_update" && event.parsed?.field1 === "in" && (checkpointColumnType === "sta" || checkpointCellPosition === 2)) {
         const checkpoint = {
           element_id: event.parsed?.field0 || null,
           row_id: getRowIdFromCellId(event.parsed?.field0 || ""),
