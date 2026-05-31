@@ -6,12 +6,21 @@ function readValue(args, i, flag) {
   return value;
 }
 
+function readOptionalValue(args, i) {
+  const value = args[i + 1];
+  if (!value || value.startsWith("--")) {
+    return null;
+  }
+  return value;
+}
+
 export function parseArgs(argv) {
   const args = argv.slice(2);
   const options = {
     analyze: null,
     report: null,
     coachDriver: null,
+    learn: false,
     url: null,
     host: null,
     port: null,
@@ -34,8 +43,10 @@ export function parseArgs(argv) {
     const arg = args[i];
     switch (arg) {
       case "--analyze":
-        options.analyze = readValue(args, i, arg);
-        i += 1;
+        options.analyze = readOptionalValue(args, i) ?? true;
+        if (options.analyze !== true) {
+          i += 1;
+        }
         break;
       case "--report":
         options.report = readValue(args, i, arg);
@@ -44,6 +55,9 @@ export function parseArgs(argv) {
       case "--coach-driver":
         options.coachDriver = readValue(args, i, arg);
         i += 1;
+        break;
+      case "--learn":
+        options.learn = true;
         break;
       case "--url":
         options.url = readValue(args, i, arg);
@@ -120,9 +134,10 @@ export function printHelp() {
     "Usage: node src/index.js [options]",
     "",
     "Offline coaching analysis:",
-    "  --analyze <path>             analyze normalized JSONL for kart coaching",
+    "  --analyze [path]             analyze normalized JSONL for kart coaching",
     "  --report <path>              write analysis report JSON to file",
     "  --coach-driver <value>       filter analyzed drivers by id/name/number",
+    "  --learn                      enable WebSocket frame learning",
     "",
     "Required behavior options:",
     "  --url <value>                 override endpoint (ws/wss/http/https)",

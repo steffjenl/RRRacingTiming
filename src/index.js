@@ -34,6 +34,7 @@ async function main() {
 
   const runtime = new LiveRuntime(runtimeConfig, logger, {
     once: cliOptions.once,
+    learningEnabled: cliOptions.learn,
     persistRawPath: cliOptions.save,
     persistNormalizedPath: cliOptions.saveNormalized,
     snapshotPath: "logs/state-snapshots.jsonl"
@@ -60,6 +61,12 @@ async function main() {
   });
 
   runtime.on("state", ({ state, summary }) => {
+    if (cliOptions.pretty) {
+      printPrettyState(state, cliOptions, summary);
+    }
+  });
+
+  runtime.on("countdown", ({ state, summary }) => {
     if (cliOptions.pretty) {
       printPrettyState(state, cliOptions, summary);
     }

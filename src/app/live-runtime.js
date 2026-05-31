@@ -6,6 +6,7 @@ import { normalizeFrame } from "../normalizers/event-normalizer.js";
 import { ModelProjector } from "../normalizers/model-projector.js";
 import { EventWriter } from "../storage/event-writer.js";
 import { StateSnapshotWriter } from "../storage/state-snapshot.js";
+import { formatCountdownMs, getCountdownRemainingMs } from "../utils/countdown.js";
 
 function createEventSummary(event) {
   return `${event.category} ${event.parsed?.field0 || ""}`.trim();
@@ -17,7 +18,10 @@ export class LiveRuntime extends EventEmitter {
     this.runtimeConfig = runtimeConfig;
     this.logger = logger;
     this.options = options;
-    this.projector = new ModelProjector(runtimeConfig);
+    this.projector = new ModelProjector({
+      ...runtimeConfig,
+      learningEnabled: Boolean(options.learningEnabled)
+    });
     this.manager = new LiveTransportManager(runtimeConfig, logger, { once: Boolean(options.once) });
 
     this.sequence = 0;
@@ -26,6 +30,7 @@ export class LiveRuntime extends EventEmitter {
     this.latestRecord = null;
     this.stopped = false;
     this.onceEmitted = false;
+    this.countdownTicker = null;
 
     this.rawWriter = new EventWriter(options.persistRawPath || null);
     this.normalizedWriter = new EventWriter(options.persistNormalizedPath || null);
@@ -86,6 +91,7 @@ export class LiveRuntime extends EventEmitter {
       return;
     }
     this.stopped = true;
+    this.stopCountdownTicker();
     this.manager.stop();
     this.rawWriter.close();
     this.normalizedWriter.close();
@@ -160,10 +166,67 @@ export class LiveRuntime extends EventEmitter {
       });
     }
 
+    this.syncCountdownTicker();
+
     if (this.options.once && frames.length > 0 && !this.onceEmitted) {
       this.onceEmitted = true;
       this.emit("once");
       this.stop();
+    }
+  }
+
+  syncCountdownTicker() {
+    const countdown = this.latestState?.session?.countdown;
+    const remainingMs = getCountdownRemainingMs(countdown);
+
+    if (!countdown || !Number.isFinite(remainingMs)) {
+      this.stopCountdownTicker();
+      return;
+    }
+
+    if (remainingMs <= 0) {
+      this.emitCountdownTick(remainingMs);
+      this.stopCountdownTicker();
+      return;
+    }
+
+    if (!this.countdownTicker) {
+      this.countdownTicker = setInterval(() => {
+        this.emitCountdownTick();
+      }, 1000);
+    }
+  }
+
+  emitCountdownTick(forcedRemainingMs = null) {
+    const countdown = this.latestState?.session?.countdown;
+    if (!countdown) {
+      return;
+    }
+
+    const remainingMs = Number.isFinite(forcedRemainingMs) ? forcedRemainingMs : getCountdownRemainingMs(countdown);
+    if (!Number.isFinite(remainingMs)) {
+      this.stopCountdownTicker();
+      return;
+    }
+
+    const summary = `countdown ${formatCountdownMs(remainingMs)}`;
+    this.emit("countdown", {
+      state: this.latestState,
+      summary,
+      remaining_ms: remainingMs,
+      received_at: new Date().toISOString(),
+      mode: this.manager.mode
+    });
+
+    if (remainingMs <= 0) {
+      this.stopCountdownTicker();
+    }
+  }
+
+  stopCountdownTicker() {
+    if (this.countdownTicker) {
+      clearInterval(this.countdownTicker);
+      this.countdownTicker = null;
     }
   }
 }

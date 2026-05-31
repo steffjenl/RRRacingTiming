@@ -10,7 +10,7 @@
     "start": "node src/index.js",
     "start:cli": "node src/index.js",
     "dev": "node src/index.js --debug",
-    "start:web": "node src/web/server.js",
+    "start:web": "LEARNING_MODE=true node src/web/server.js",
     "analyze": "node src/index.js --analyze",
     "lint": "node --check src/index.js && node --check src/app/live-runtime.js && node --check src/analysis/kart-coach-analyzer.js && node --check src/storage/analytics-db.js && node --check src/web/server.js && node --check src/web/public/app.js"
   },

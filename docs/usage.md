@@ -58,3 +58,21 @@ node src/index.js --url https://www.apex-timing.com/commonv2/functions/live_ajax
 ```bash
 node src/index.js --debug --pretty
 ```
+
+## Leer-modus
+
+Activeer frame learning expliciet met:
+
+```bash
+node src/index.js --learn --pretty
+```
+
+Voor de webserver gebruik je:
+
+```bash
+LEARNING_MODE=true npm run start:web
+```
+
+## Countdown
+
+Als er een frame `dyn1|countdown|236950` binnenkomt, tonen CLI en web dezelfde countdown in `mm:ss` en blijft die per seconde doorlopen zolang de timer actief is.

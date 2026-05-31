@@ -29,9 +29,11 @@ const appVersion = JSON.parse(fs.readFileSync(packageJsonPath, "utf8")).version 
 const maxWsClients = Number(process.env.WEB_MAX_WS_CLIENTS || 80);
 const allowedCorsOrigin = process.env.CORS_ORIGIN || "*";
 const trustProxy = Number(process.env.WEB_TRUST_PROXY || 1);
+const learningEnabled = String(process.env.LEARNING_MODE || "").toLowerCase() === "true" || process.env.LEARNING_MODE === "1";
 
 const runtime = new LiveRuntime(runtimeConfig, logger, {
   once: false,
+  learningEnabled,
   persistRawPath: process.env.WEB_SAVE_RAW || null,
   persistNormalizedPath: process.env.WEB_SAVE_NORMALIZED || null,
   snapshotPath: process.env.WEB_SNAPSHOT_PATH || "logs/state-snapshots.jsonl"
@@ -129,7 +131,8 @@ wsServer.on("connection", (ws) => {
     config: {
       host: runtimeConfig.host,
       port: runtimeConfig.port,
-      gmt: runtimeConfig.gmt
+      gmt: runtimeConfig.gmt,
+      learningEnabled
     }
   });
 
@@ -201,6 +204,14 @@ runtime.on("state", ({ state, summary, sequence, mode }) => {
 
   broadcastState("update", state, summary, {
     sequence,
+    mode
+  });
+});
+
+runtime.on("countdown", ({ state, summary, remaining_ms, received_at, mode }) => {
+  broadcastState("countdown", state, summary, {
+    remaining_ms,
+    received_at,
     mode
   });
 });

@@ -1,4 +1,5 @@
 import { filterDrivers } from "../filters/driver-filter.js";
+import { formatCountdownDisplay } from "../utils/countdown.js";
 
 function formatValue(value) {
   if (value === null || value === undefined || value === "") {
@@ -34,14 +35,26 @@ function formatRemarkTime(isoString) {
   });
 }
 
+function formatCheckpointSummary(state) {
+  const checkpoint = state.session?.last_checkpoint;
+  if (!checkpoint) {
+    return "-";
+  }
+
+  return formatCountdownDisplay(checkpoint);
+}
+
 export function printPrettyState(state, options, lastEventSummary = "") {
   const drivers = filterDrivers(state.grid?.drivers || [], options);
   const latestRemark = state.race_status?.last_message || "Nog geen opmerkingen ontvangen.";
   const remarkHistory = state.race_status?.message_history || [];
+  const countdownDisplay = formatCountdownDisplay(state.session?.countdown);
+  const checkpointDisplay = formatCheckpointSummary(state);
 
   process.stdout.write("\x1Bc");
   console.log("RRRacingTiming CLI - Apex Live");
-  console.log(`Connection: ${state.session.connection_state} | Mode: ${state.session.live_mode || "-"} | GMT: ${state.session.gmt}`);
+  console.log(`${state.session.connection_state} | ${state.session.live_mode || "-"} | Countdown ${countdownDisplay} | Checkpoint ${checkpointDisplay}`);
+  console.log(`GMT: ${state.session.gmt}`);
   console.log(`Event: ${lastEventSummary}`);
   console.log("");
 

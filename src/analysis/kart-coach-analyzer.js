@@ -1,4 +1,5 @@
 import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 
 function matchesContains(source, needle) {
   if (!needle) {
@@ -214,10 +215,8 @@ function printDriverReport(report) {
 }
 
 export function runKartCoachAnalysis(options) {
-  const inputPath = options.analyze;
-  if (!inputPath) {
-    throw new Error("Missing --analyze <path> for coaching analysis.");
-  }
+  const defaultInputPath = fileURLToPath(new URL("../../logs/normalized-test.jsonl", import.meta.url));
+  const inputPath = typeof options.analyze === "string" && options.analyze.length > 0 ? options.analyze : defaultInputPath;
   if (!fs.existsSync(inputPath)) {
     throw new Error(`Analyze input file does not exist: ${inputPath}`);
   }

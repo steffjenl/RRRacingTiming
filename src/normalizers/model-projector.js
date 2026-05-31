@@ -122,15 +122,65 @@ function enrichTeams(drivers, driverInfoByDriverId) {
   });
 }
 
+function buildFrameSignature(event) {
+  return [event.category, event.parsed?.field0 || "", event.parsed?.field1 || ""].join("|");
+}
+
+function updateFrameLearning(frameLearning, event) {
+  const signature = buildFrameSignature(event);
+  const preview = String(event.raw_line || "").slice(0, 140);
+  const countsByCategory = { ...(frameLearning.counts_by_category || {}) };
+  const countsBySignature = { ...(frameLearning.counts_by_signature || {}) };
+  const recentSamples = Array.isArray(frameLearning.recent_samples) ? frameLearning.recent_samples.slice() : [];
+
+  countsByCategory[event.category] = (countsByCategory[event.category] || 0) + 1;
+  countsBySignature[signature] = (countsBySignature[signature] || 0) + 1;
+
+  const latest = recentSamples[recentSamples.length - 1];
+  const isDuplicate = latest?.signature === signature && latest?.preview === preview;
+  if (!isDuplicate) {
+    recentSamples.push({
+      received_at: event.received_at,
+      category: event.category,
+      signature,
+      preview
+    });
+  }
+
+  return {
+    total_frames: (frameLearning.total_frames || 0) + 1,
+    counts_by_category: countsByCategory,
+    counts_by_signature: countsBySignature,
+    recent_samples: recentSamples.slice(-12)
+  };
+}
+
+function buildDeadlineAt(receivedAt, durationMs) {
+  const receivedAtMs = Date.parse(receivedAt);
+  if (!Number.isFinite(receivedAtMs)) {
+    return receivedAt;
+  }
+  return new Date(receivedAtMs + durationMs).toISOString();
+}
+
+function getRowIdFromCellId(cellId) {
+  return String(cellId || "").replace(/c\d+$/, "") || null;
+}
+
 export class ModelProjector {
   constructor(baseConfig) {
+    this.learningEnabled = Boolean(baseConfig.learningEnabled);
     this.state = {
       session: {
         host: baseConfig.host,
         base_port: baseConfig.port,
         gmt: baseConfig.gmt,
         live_mode: null,
-        connection_state: "connecting"
+        connection_state: "connecting",
+        countdown: null,
+        last_checkpoint: null,
+        checkpoint_history: [],
+        checkpoint_count: 0
       },
       race_status: {
         last_message: null,
@@ -146,7 +196,14 @@ export class ModelProjector {
       laps_by_driver: {},
       pits_by_driver: {},
       best_lap_by_driver: {},
-      best_sectors_by_driver: {}
+      best_sectors_by_driver: {},
+      frame_learning: {
+        enabled: this.learningEnabled,
+        total_frames: 0,
+        counts_by_category: {},
+        counts_by_signature: {},
+        recent_samples: []
+      }
     };
   }
 
@@ -157,6 +214,10 @@ export class ModelProjector {
   apply(event) {
     const previousGrid = this.state.grid.drivers;
     const previousById = indexBy(previousGrid, "id");
+
+    if (this.learningEnabled) {
+      this.state.frame_learning = updateFrameLearning(this.state.frame_learning, event);
+    }
 
     const { category } = event;
     const normalized = event.normalized || {};
@@ -187,6 +248,19 @@ export class ModelProjector {
       }
     }
 
+    if (category === "dynamic_banner" && event.parsed?.field1 === "countdown") {
+      const remainingMs = Number.parseInt(event.parsed?.field2 || "", 10);
+      if (Number.isFinite(remainingMs) && remainingMs >= 0) {
+        const deadlineAt = buildDeadlineAt(event.received_at, remainingMs);
+        this.state.session.countdown = {
+          label: "countdown",
+          remaining_ms: remainingMs,
+          deadline_at: deadlineAt,
+          updated_at: event.received_at
+        };
+      }
+    }
+
     if (category === "grid") {
       this.state.grid.html = event.parsed?.field2 || "";
       const parsedDrivers = parseGridHtml(this.state.grid.html);
@@ -201,6 +275,28 @@ export class ModelProjector {
           value: event.parsed?.field2 || "",
           updated_at: event.received_at
         };
+      }
+
+      if (category === "element_update" && event.parsed?.field1 === "in") {
+        const checkpoint = {
+          element_id: event.parsed?.field0 || null,
+          row_id: getRowIdFromCellId(event.parsed?.field0 || ""),
+          class_name: "in",
+          value: event.parsed?.field2 || "",
+          updated_at: event.received_at,
+          deadline_at: buildDeadlineAt(event.received_at, 8000)
+        };
+
+        this.state.session.last_checkpoint = checkpoint;
+        this.state.session.checkpoint_count = (this.state.session.checkpoint_count || 0) + 1;
+
+        const history = this.state.session.checkpoint_history || [];
+        const latest = history[history.length - 1];
+        const isDuplicate = latest?.element_id === checkpoint.element_id && latest?.updated_at === checkpoint.updated_at && latest?.value === checkpoint.value;
+        if (!isDuplicate) {
+          history.push(checkpoint);
+          this.state.session.checkpoint_history = history.slice(-5);
+        }
       }
     }
 

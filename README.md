@@ -72,6 +72,7 @@ http://localhost:3000
 - `--save-normalized <path>` sla genormaliseerde events op als JSONL
 - `--once` één connect/cycle en stop
 - `--debug` extra logging
+- `--learn` activeer WebSocket frame learning in de CLI
 
 Extra (optioneel):
 - `--host <value>`
@@ -94,6 +95,7 @@ node src/index.js --url ws://www.apex-timing.com:9462/ --once --debug
 - Driverfilters (driver, driver number, team) worden ingesteld in de UI.
 - Filters worden server-side toegepast met dezelfde filterfunctie als CLI (`filterDrivers`).
 - Health endpoint: `/health`.
+- `dyn1|countdown|<ms>` wordt als gesynchroniseerde countdown in `mm:ss` getoond in CLI en web.
 
 ## Kart Coaching CLI (offline analyse)
 
@@ -129,6 +131,7 @@ Belangrijke env vars voor web mode:
 - `WEB_SAVE_RAW` (optioneel)
 - `WEB_SAVE_NORMALIZED` (optioneel)
 - `WEB_SNAPSHOT_PATH` (optioneel)
+- `LEARNING_MODE=true` activeer WebSocket frame learning in de webserver
 
 Reverse proxy tip (404 polling warning):
 - Als je `{"type":"warning","warning":{"status":404}}` ziet, komt dat meestal van polling fallback naar een verkeerde URL.

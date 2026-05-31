@@ -42,6 +42,32 @@ function formatMs(ms) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${String(millis).padStart(3, "0")}`;
 }
 
+function formatCountdownDisplay(countdown) {
+  if (!countdown?.deadline_at) {
+    return "--:--";
+  }
+
+  const deadlineAt = Date.parse(countdown.deadline_at);
+  if (!Number.isFinite(deadlineAt)) {
+    return "--:--";
+  }
+
+  const remainingMs = Math.max(0, deadlineAt - Date.now());
+  const totalSeconds = Math.floor(remainingMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function buildCheckpointDisplay(state) {
+  const checkpoint = state?.session?.last_checkpoint;
+  if (!checkpoint) {
+    return "--:--";
+  }
+
+  return formatCountdownDisplay(checkpoint);
+}
+
 function buildSparkline(history, width = 320, height = 88) {
   const values = (history || [])
     .map((item) => item?.avg_lap_ms)
@@ -229,6 +255,30 @@ function buildDriverInsights(state, driver) {
   };
 }
 
+function buildFrameLearningInsights(frameLearning) {
+  if (!frameLearning) {
+    return null;
+  }
+
+  const categories = Object.entries(frameLearning.counts_by_category || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([category, count]) => ({ category, count }));
+
+  const signatures = Object.entries(frameLearning.counts_by_signature || {})
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([signature, count]) => ({ signature, count }));
+
+  return {
+    enabled: Boolean(frameLearning.enabled),
+    totalFrames: frameLearning.total_frames || 0,
+    categories,
+    signatures,
+    recentSamples: frameLearning.recent_samples || []
+  };
+}
+
 function App() {
   const [state, setState] = useState(null);
   const [summary, setSummary] = useState("Wachten op data...");
@@ -275,6 +325,11 @@ function App() {
         if (payload.meta?.mode) {
           setMode(payload.meta.mode);
         }
+      }
+
+      if (payload.type === "countdown") {
+        setState(payload.state);
+        setSummary(payload.summary || "-");
       }
 
       if (payload.type === "status") {
@@ -349,12 +404,21 @@ function App() {
     };
   }, [selectedDriver?.id, state?.session?.connection_state]);
 
-  const statusText = `${connectionState} | ${mode}`;
   const statusClass = connectionState.includes("connected") ? "status-dot connected" : "status-dot";
   const sparkline = useMemo(() => {
     return buildSparkline(driverAnalytics?.history || []);
   }, [driverAnalytics]);
+  const frameLearning = useMemo(() => {
+    return buildFrameLearningInsights(state?.frame_learning);
+  }, [state]);
+  const countdownText = useMemo(() => {
+    return formatCountdownDisplay(state?.session?.countdown);
+  }, [state]);
+  const checkpointText = useMemo(() => {
+    return buildCheckpointDisplay(state);
+  }, [state]);
   const appVersion = window.__APP_VERSION__ || "0.0.0-dev";
+  const statusStrip = `${connectionState} | ${mode} | Countdown ${countdownText} | Checkpoint ${checkpointText}`;
 
   const e = React.createElement;
 
@@ -362,9 +426,9 @@ function App() {
     e("header", { className: "hero", key: "hero" }, [
       e("h1", { key: "title" }, "RR-Racing Live Dashboard"),
       e("p", { className: "subtitle", key: "subtitle" }, "Live timing met pitbox-power voor de broertjes van RR-Racing uit Den Oever."),
-      e("div", { className: "status-chip", key: "status" }, [
+      e("div", { className: "status-chip status-strip", key: "statusStrip" }, [
         e("span", { className: statusClass, key: "dot" }),
-        e("span", { key: "text" }, statusText)
+        e("span", { key: "text" }, statusStrip)
       ])
     ]),
     e("section", { className: "filters", key: "filters" }, [
@@ -563,6 +627,44 @@ function App() {
                 e("span", { key: "sparkMin" }, `Snelst avg: ${formatMs(sparkline.min)}`),
                 e("span", { key: "sparkMax" }, `Langzaamst avg: ${formatMs(sparkline.max)}`),
                 e("span", { key: "sparkDelta" }, `Delta: ${Math.round((sparkline.last || 0) - (sparkline.first || 0))} ms`)
+              ])
+            ])
+          : null
+      ]),
+      e("div", { className: "coach-db", key: "frameLearning" }, [
+        e("h3", { key: "frameTitle" }, "WebSocket learning"),
+        frameLearning
+          ? e("p", { key: "frameSummary" }, frameLearning.enabled
+              ? `Aan: ${frameLearning.totalFrames} frames gezien | ${frameLearning.categories.length} unieke categorieën`
+              : "Uit: start de app met LEARNING_MODE=true of --learn om frames op te slaan.")
+          : e("p", { key: "frameSummary" }, "Nog geen WebSocket-frametellingen beschikbaar."),
+        frameLearning && frameLearning.enabled && frameLearning.categories.length > 0
+          ? e("div", { className: "coach-columns", key: "frameColumns" }, [
+              e("div", { className: "coach-block", key: "frameCategories" }, [
+                e("h3", { key: "frameCategoriesTitle" }, "Top categorieën"),
+                e(
+                  "ul",
+                  { key: "frameCategoriesList" },
+                  frameLearning.categories.map((item) => e("li", { key: item.category }, `${item.category}: ${item.count}`))
+                )
+              ]),
+              e("div", { className: "coach-block", key: "frameSignatures" }, [
+                e("h3", { key: "frameSignaturesTitle" }, "Top signatures"),
+                e(
+                  "ul",
+                  { key: "frameSignaturesList" },
+                  frameLearning.signatures.map((item) => e("li", { key: item.signature }, `${item.signature}: ${item.count}`))
+                )
+              ]),
+              e("div", { className: "coach-block", key: "frameSamples" }, [
+                e("h3", { key: "frameSamplesTitle" }, "Recente samples"),
+                e(
+                  "ul",
+                  { key: "frameSamplesList" },
+                  (frameLearning.recentSamples.slice(-5) || []).map((item, idx) =>
+                    e("li", { key: `${item.signature}-${idx}` }, `${item.category} | ${item.preview}`)
+                  )
+                )
               ])
             ])
           : null
