@@ -10,9 +10,14 @@ services:
       APEX_SECURE: ${APEX_SECURE:-false}
       APEX_WS_URL: ${APEX_WS_URL:-}
       APEX_POLLING_URL: ${APEX_POLLING_URL:-}
-      WEB_PORT: 3000
+      WEB_PORT: ${WEB_PORT:-3000}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      WEB_MAX_WS_CLIENTS: ${WEB_MAX_WS_CLIENTS:-80}
+      CORS_ORIGIN: ${CORS_ORIGIN:-*}
+      WEB_TRUST_PROXY: ${WEB_TRUST_PROXY:-1}
+      LEARNING_MODE: ${LEARNING_MODE:-true}
       WEB_SAVE_RAW: ${WEB_SAVE_RAW:-}
       WEB_SAVE_NORMALIZED: ${WEB_SAVE_NORMALIZED:-}
       WEB_SNAPSHOT_PATH: ${WEB_SNAPSHOT_PATH:-logs/state-snapshots.jsonl}
+      ANALYTICS_DB_PATH: ${ANALYTICS_DB_PATH:-logs/analytics-db.json}
     restart: unless-stopped
